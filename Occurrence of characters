@@ -1,0 +1,14 @@
+def find_single_occurrence_chars(s: str) -> str:
+    # Step 1: Register banao — har character ki ginti karo
+    freq = {}
+    for ch in s:
+        freq[ch] = freq.get(ch, 0) + 1
+    
+    # Step 2: String firse padho, sirf 1-baar wale uthao
+    result = []
+    for ch in s:
+        if freq[ch] == 1:
+            result.append(ch)
+    
+    # Step 3: List ko string bana do
+    return ''.join(result)
