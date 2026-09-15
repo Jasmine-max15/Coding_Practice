@@ -1,0 +1,32 @@
+from os import *
+from sys import *
+from collections import *
+from math import *
+
+from sys import stdin
+import sys
+
+def swapNumber(x, y):
+    x= x+y
+    y= x-y
+    x= x-y
+    # Return a list which contain two swapped integer.
+    return [x, y]
+
+
+# Taking input using fast I/O.
+def takeInput():
+
+    num = list(map(int, input().strip().split(" ")))
+
+    return num
+
+
+# Main.
+t = int(input())
+while t:
+    x, y = takeInput()
+
+    answer = swapNumber(x, y)
+    print(answer[0], answer[1], sep=" ")
+    t = t-1
