@@ -1,0 +1,45 @@
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.left = None
+        self.right = None
+
+
+def insert(root, data):
+    if root is None:
+        return Node(data)
+
+    if data < root.data:
+        root.left = insert(root.left, data)
+    else:
+        root.right = insert(root.right, data)
+
+    return root
+
+
+def lca_three(root, a, b, c):
+    while root:
+        if a < root.data and b < root.data and c < root.data:
+            root = root.left
+
+        elif a > root.data and b > root.data and c > root.data:
+            root = root.right
+
+        else:
+            return root.data
+
+    return None
+
+
+root = None
+
+values = [20, 10, 30, 5, 15, 25, 35]
+
+for value in values:
+    root = insert(root, value)
+
+a = 5
+b = 15
+c = 25
+
+print("LCA =", lca_three(root, a, b, c))
