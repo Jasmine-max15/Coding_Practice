@@ -1,0 +1,14 @@
+def count_vowels_consonants_spaces(s):
+    vowels = set('aeiouAEIOU')
+    v = c = sp = 0
+    for ch in s:
+        if ch == ' ':
+            sp += 1
+        elif ch.isalpha():
+            if ch in vowels:
+                v += 1
+            else:
+                c += 1
+    return v, c, sp
+s = "Take u forward is Awesome"
+print(count_vowels_consonants_spaces(s))  # (10, 11, 4)
