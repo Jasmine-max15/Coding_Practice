@@ -1,0 +1,184 @@
+-- ============================================================
+-- DB TESTING PRACTICE SCRIPT (MySQL)
+-- ============================================================
+
+DROP DATABASE IF EXISTS testing_practice;
+CREATE DATABASE testing_practice;
+USE testing_practice;
+
+-- ============================================================
+-- SCHEMA CREATION
+-- ============================================================
+
+CREATE TABLE users (
+    user_id     INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    email       VARCHAR(150) NOT NULL UNIQUE,
+    age         INT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    product_id      INT AUTO_INCREMENT PRIMARY KEY,
+    product_name    VARCHAR(150) NOT NULL,
+    price           DECIMAL(10,2) NOT NULL,
+    discount_price  DECIMAL(10,2)
+);
+
+CREATE TABLE customers (
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    email       VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE orders (
+    order_id      INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id   INT,
+    total_amount  DECIMAL(10,2),
+    status        VARCHAR(30) DEFAULT 'Pending',
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+CREATE TABLE order_items (
+    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id      INT NOT NULL,
+    quantity      INT NOT NULL,
+    unit_price    DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE accounts (
+    account_id  VARCHAR(10) PRIMARY KEY,
+    holder_name VARCHAR(100),
+    balance     DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE transactions (
+    txn_id        INT AUTO_INCREMENT PRIMARY KEY,
+    reference_id  VARCHAR(50),
+    from_account  VARCHAR(10),
+    to_account    VARCHAR(10),
+    amount        DECIMAL(10,2),
+    status        VARCHAR(20) DEFAULT 'PENDING',
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- TEST DATA
+-- ============================================================
+
+INSERT INTO users (name, email, age) VALUES
+('John Smith', 'john@mail.com', 30),
+('Jane Doe',   'jane@mail.com', 18),
+('Bob Young',  'bob@mail.com', 65),
+('Old Timer',  'old@mail.com', 66),
+('Too Young',  'young@mail.com', 17);
+
+INSERT INTO products (product_name, price, discount_price) VALUES
+('Laptop',      1000.00, 800.00),
+('Headphones',   100.00,  50.00),
+('Mouse',         25.00,  25.00),
+('Keyboard',      45.00,  60.00);
+
+INSERT INTO customers (name, email) VALUES
+('Alice Brown', 'alice@mail.com'),
+('Charlie Kim',  'charlie@mail.com');
+
+INSERT INTO orders (customer_id, total_amount, status) VALUES
+(1, 150.00, 'Pending'),
+(2, 300.00, 'Pending');
+
+INSERT INTO order_items (order_id, quantity, unit_price) VALUES
+(1, 2, 75.00),
+(2, 1, 300.00),
+(99, 3, 20.00);
+
+INSERT INTO accounts (account_id, holder_name, balance) VALUES
+('A', 'Account A Holder', 500.00),
+('B', 'Account B Holder', 200.00);
+
+-- ============================================================
+-- SCENARIO 1: Update Profile / Email change validation
+-- ============================================================
+
+UPDATE users
+SET email = 'john.updated@mail.com'
+WHERE user_id = 1;
+
+SELECT user_id, email, updated_at
+FROM users
+WHERE user_id = 1;
+
+SELECT *
+FROM users
+WHERE user_id = 1
+  AND email != 'john@mail.com';
+
+-- ============================================================
+-- SCENARIO 2: discount_price >= price bug check
+-- ============================================================
+
+SELECT product_id, product_name, price, discount_price
+FROM products
+WHERE discount_price >= price;
+
+-- ============================================================
+-- SCENARIO 3: Orphan order_items (no matching order)
+-- ============================================================
+
+SELECT oi.*
+FROM order_items oi
+LEFT JOIN orders o ON oi.order_id = o.order_id
+WHERE o.order_id IS NULL;
+
+-- ============================================================
+-- SCENARIO 4: Age field boundary review
+-- ============================================================
+
+SELECT user_id, name, age,
+    CASE
+        WHEN age BETWEEN 18 AND 65 THEN 'Should be ACCEPTED'
+        ELSE 'Should be REJECTED'
+    END AS expected_validation_result
+FROM users
+WHERE user_id IN (2,3,4,5);
+
+-- ============================================================
+-- SCENARIO 5: Money transfer / rollback
+-- ============================================================
+
+START TRANSACTION;
+
+    UPDATE accounts
+    SET balance = balance - 100.00
+    WHERE account_id = 'A';
+
+    INSERT INTO transactions (reference_id, from_account, to_account, amount, status)
+    VALUES ('TXN12345', 'A', 'B', 100.00, 'PENDING');
+
+    -- Step 2 (credit B) never runs -- simulating a failure
+
+    ROLLBACK;
+
+SELECT account_id, balance FROM accounts WHERE account_id IN ('A','B');
+
+SELECT * FROM transactions WHERE reference_id = 'TXN12345';
+
+-- ============================================================
+-- BONUS: General-purpose validation queries
+-- ============================================================
+
+SELECT email, COUNT(*) AS cnt
+FROM users
+GROUP BY email
+HAVING cnt > 1;
+
+SELECT * FROM orders WHERE customer_id IS NULL OR total_amount IS NULL;
+
+SELECT order_item_id, order_id, quantity, unit_price,
+       (quantity * unit_price) AS calculated_total
+FROM order_items;
+
+SELECT COUNT(*) AS user_count FROM users;
+SELECT COUNT(*) AS product_count FROM products;
