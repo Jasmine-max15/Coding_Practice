@@ -1,0 +1,10 @@
+def flatten_deep(nested_list):
+    result = []
+    for item in nested_list:
+        if isinstance(item, list):
+            result.extend(flatten_deep(item))
+        else:
+            result.append(item)
+    return result
+
+print(flatten_deep([1, [2, [3, [4, 5]], 6]]))  # [1, 2, 3, 4, 5, 6]
